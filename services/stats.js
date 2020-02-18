@@ -52,12 +52,45 @@ exports.statsByType = (client, callback) => {
 
 exports.statsByMonth = (client, callback) => {
     // TODO Trouver le top 10 des mois avec le plus d'anomalies
+    /*
+    * "aggs" : {
+            "arrondissements" : {
+                "terms" : { "field" : "mois_declaration.keyword", size: 10 }
+            }
+    * */
     callback([]);
 }
 
 exports.statsPropreteByArrondissement = (client, callback) => {
-    // TODO Trouver le top 3 des arrondissements avec le plus d'anomalies concernant la propreté
-    callback([]);
+    client.search({
+        index: indexName,
+        body: {
+            query: {
+                bool: {
+                    must: [
+                        {
+                            match: {type: "propreté"}
+                        }
+                    ]
+                }
+            },
+            aggs: {
+                arrondissements : {
+                    terms: {
+                        field: "arrondissement.keyword", size: 3
+                    }
+                }
+            }
+        }
+    }).then(function(resp) {
+        console.log("Successful query!");
+        console.log(JSON.stringify(resp, null, 4));
+
+        callback(formatTypeArrResponse(resp.body));
+
+    }, function(err) {
+        console.trace(err.message);
+    });
 }
 
 function formatArrResponse(data) {
@@ -87,4 +120,13 @@ function formatTypeResponse(data) {
         }
     });
     return results
+}
+
+function formatTypeArrResponse(data) {
+    let buckets = data.aggregations.arrondissements.buckets;
+    let results = buckets.map((bucket) => {
+        return {"arrondissement": bucket.key, "count": bucket.doc_count}
+    });
+    console.log(results);
+    return results;
 }
