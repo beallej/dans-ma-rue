@@ -52,13 +52,27 @@ exports.statsByType = (client, callback) => {
 
 exports.statsByMonth = (client, callback) => {
     // TODO Trouver le top 10 des mois avec le plus d'anomalies
-    /*
-    * "aggs" : {
-            "arrondissements" : {
-                "terms" : { "field" : "mois_declaration.keyword", size: 10 }
+    client.search({
+        index: indexName,
+        body: {
+            aggs: {
+                all_months: {
+                    date_histogram: {
+                        field: "timestamp",
+                        calendar_interval: "1M"
+                    }
+                }
             }
-    * */
-    callback([]);
+        }
+    }).then(function(resp) {
+        console.log("Successful query!");
+        console.log(JSON.stringify(resp, null, 4));
+
+        callback(formatMonthResponse(resp.body));
+
+    }, function(err) {
+        console.trace(err.message);
+    });
 }
 
 exports.statsPropreteByArrondissement = (client, callback) => {
@@ -85,7 +99,6 @@ exports.statsPropreteByArrondissement = (client, callback) => {
     }).then(function(resp) {
         console.log("Successful query!");
         console.log(JSON.stringify(resp, null, 4));
-
         callback(formatTypeArrResponse(resp.body));
 
     }, function(err) {
@@ -127,6 +140,18 @@ function formatTypeArrResponse(data) {
     let results = buckets.map((bucket) => {
         return {"arrondissement": bucket.key, "count": bucket.doc_count}
     });
-    console.log(results);
     return results;
+}
+
+function formatMonthResponse(data) {
+    let buckets = data.aggregations.all_months.buckets;
+    buckets = buckets.sort((m1, m2) => {
+        return m2.doc_count - m1.doc_count;
+    });
+    let top10Months = buckets.slice(0,10);
+    return top10Months.map((month) => {
+        let dateObj = new Date(month.key_as_string);
+        let dateStr = (dateObj.getMonth() + 1)+ "/" + dateObj.getFullYear();
+        return { month: dateStr, count: month.doc_count}
+    })
 }
