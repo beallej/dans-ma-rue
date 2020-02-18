@@ -9,9 +9,20 @@ async function run () {
     const client = new Client({ node: config.get('elasticsearch.uri') });
 
     // Création de l'indice
-    client.indices.create({ index: indexName }, (err, resp) => {
+    client.indices.create({ index: indexName,
+        body: {
+            mappings: {
+                properties: {
+                    location: {type: 'geo_point'},
+                    timestamp: {type: 'date'},
+                }
+            }
+        }
+
+    }, (err, resp) => {
         if (err) console.trace(err.message);
     });
+
 
 
     let anomalies = [];
@@ -23,9 +34,10 @@ async function run () {
         }))
         .on('data', (data) => {
             anomalies.push({
+                timestamp: data["DATEDECL"],
                 object_id: data["OBJECTID"],
                 annee_declaration: data["ANNEE DECLARATION"],
-                mois_delcaration: data["MOIS DECLARATION"],
+                mois_declaration: data["MOIS DECLARATION"],
                 type: data["TYPE"],
                 sous_type: data["SOUSTYPE"],
                 code_postal: data["CODE_POSTAL"],
@@ -41,10 +53,13 @@ async function run () {
                 anomalies = [];
                 client.bulk(createBulkInsertQuery(anomalies_full), (err, resp) => {
                     if (err) console.error(err);
-                    else console.log(`Inserted ${resp.body.items.length} events`);
+                    else {
+                        console.log(resp)
+                        console.log(`Inserted ${resp.body.items.length} events`);
+                    }
                 });
             }
-            console.log(data);
+            // console.log(data);
         })
         .on('end', () => {
 
@@ -62,11 +77,11 @@ function createBulkInsertQuery(anomalies) {
     const body = anomalies.reduce((acc, anomalie) => {
         const { annee_declaration, mois_declaration,
             type, sous_type, code_postal, ville, arrondissement,
-            prefixe, intervenant, conseil_de_quartier, location } = anomalie;
+            prefixe, intervenant, conseil_de_quartier, location, timestamp } = anomalie;
         acc.push({ index: { _index: indexName, _type: '_doc', _id: anomalie.object_id } })
         acc.push({ annee_declaration, mois_declaration,
             type, sous_type, code_postal, ville, arrondissement,
-            prefixe, intervenant, conseil_de_quartier, location })
+            prefixe, intervenant, conseil_de_quartier, location, timestamp })
         return acc
     }, []);
 
