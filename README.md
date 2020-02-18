@@ -387,7 +387,7 @@ doit produire le résultat suivant :
 Dans Kibana, créez un dashboard qui permet de visualiser :
 
 * Le nombre total d'anomalies
-* Un histogramme des anomalies réparties par arrondissement
+* Un histogramme de date des anomalies réparties par arrondissement
 * Un camembert avec le top 5 des types d'anomalies
 * Une carte (de type heatmap) de l'ensemble des anomalies
 
@@ -398,3 +398,9 @@ Faites une capture d'écran du dashboard et ajoutez le au dépôt afin qu'il soi
 ## Pour rendre le travail
 
 Une fois l'ensemble du code complété et le dashboard ajouté, faites une Pull Request !
+
+## Liens utiles
+
+* Documentation officielle Elasticsearch : https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+* Client Node.js officiel pour Elasticsearch : https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/index.html
+
