@@ -151,7 +151,8 @@ function formatMonthResponse(data) {
     let top10Months = buckets.slice(0,10);
     return top10Months.map((month) => {
         let dateObj = new Date(month.key_as_string);
-        let dateStr = (dateObj.getMonth() + 1)+ "/" + dateObj.getFullYear();
+        let mth = dateObj.getMonth() + 1;
+        let dateStr = ((mth < 10) ? "0" + mth : mth)+ "/" + dateObj.getFullYear();
         return { month: dateStr, count: month.doc_count}
     })
 }
